@@ -1,0 +1,26 @@
+version: "3"
+services:
+  db:
+    image: mysql:latest
+    restart: always
+    container_name: maria_ai_db
+    env_file:
+      - .env-non-dev
+    ports:
+      - 3306:3306
+    volumes:
+      - ./dbdata:/var/lib/mysql/
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root --password=${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  my_app:
+    build: .
+    volumes:
+      - './config:/data/config'
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && python -m app.main"
